@@ -1,18 +1,21 @@
-# 芯来科技RVSTAR开发板 #
+# 芯来科技蜂鸟FPGA评估板 #
 
 ## 简介
 
-**RVSTAR开发板** 是由芯来科技公司推出的基于采用芯来科技RISC-V架构处理器芯片的GD32VF103的开发板。
+**蜂鸟FPGA评估板** 是由芯来科技公司推出的用于测试评估芯来RISC-V内核处理器的FPGA评估板。
 
-更多关于 **RVSTAR开发板** 开发板的详细资料请参见 [RVSTAR开发板快速入门](https://www.rvmcu.com/quickstart-quickstart-index-u-RV_STAR.html)
+更多关于 **蜂鸟FPGA评估板** 开发板的详细资料请参见 [蜂鸟FPGA评估板](https://nucleisys.com/developboard.php)
 
 ### 板载资源
 
 | 硬件 | 描述 |
 | ---  | --- |
-| 内核 | Nuclei N205 |
-| 架构 | 32-bit RV32IMAC |
-| 主频 | 108 MHz |
+| 内核 | Nuclei RISC-V N/NX 内核 |
+| 架构 | RV32 or RV64 |
+| 主频 | 8MHz |
+
+**注意**: 这个上面烧写的是FPGA bitstream文件，所以处理器内核版本根据型号来定，通过修改**rtconfig.py**中的**NUCLEI_SDK_CORE**.
+
 
 ## 工具安装
 
@@ -54,13 +57,13 @@ export PATH=~/Software/Nuclei/gcc/bin:~/Software/Nuclei/openocd/bin:$PATH
 
 ## 烧写及执行
 
-### [驱动设置](https://doc.nucleisys.com/nuclei_board_labs/hw/hw.html#on-board-debugger-driver)
+### [驱动设置](https://nucleisys.com/developboard.php)
 
 ### 编译程序
 
 下载好[RT-Thread](https://github.com/RT-Thread/rt-thread)的代码和[ENV工具](https://www.rt-thread.org/document/site/tutorial/env-video/)以后。
 
-按照ENV工具的教程, 在**rt-thread\bsp\nuclei\gd32vf103_rvstar**目录打开ENV工具命令行。
+按照ENV工具的教程, 在**rt-thread\bsp\nuclei\hbird_eval**目录打开ENV工具命令行。
 
 **注意**: 请确保Nuclei GCC和Nuclei OpenOCD的路径设置正确无误。
 
@@ -77,25 +80,24 @@ export PATH=~/Software/Nuclei/gcc/bin:~/Software/Nuclei/openocd/bin:$PATH
 
 ~~~
 scons: Reading SConscript files ...
-Supported downloaded modes for board gd32vf103v_rvstar are flashxip, chosen downloaded mode is flashxip
+Supported downloaded modes for board hbird_eval are ('ilm', 'flash', 'flashxip'), chosen downloaded mode is ilm
 Upload application rtthread.elf using openocd and gdb
-riscv-nuclei-elf-gdb rtthread.elf -ex "set remotetimeout 240"                     -ex "target remote | openocd --pipe -f D:/workspace/Sourcecode/rt-thread/bsp/nuclei/gd32vf103_rvstar/packages/nuclei_sdk-latest/SoC/gd32vf103/Board/gd32vf103v_rvstar/openocd_gd32vf103.cfg"                     --batch -ex "monitor halt" -ex "monitor flash protect 0 0 last off" -ex "load"                     -ex "monitor resume" -ex "monitor shutdown" -ex "quit"
+riscv-nuclei-elf-gdb rtthread.elf -ex "set remotetimeout 240"                     -ex "target remote | openocd --pipe -f D:/workspace/Sourcecode/rt-thread/bsp/nuclei/hbird_eval/packages/nuclei_sdk-latest/SoC/hbird/Board/hbird_eval/openocd_hbird.cfg"                     --batch -ex "monitor halt" -ex "monitor flash protect 0 0 last off" -ex "load"
+                     -ex "monitor resume" -ex "monitor shutdown" -ex "quit"
 D:\Software\Nuclei\gcc\bin\riscv-nuclei-elf-gdb.exe: warning: Couldn't determine a path for the index cache directory.
-
 Nuclei OpenOCD, 64-bit Open On-Chip Debugger 0.10.0+dev-00014-g0eae03214 (2019-12-12-07:43)
 Licensed under GNU GPL v2
 For bug reports, read
         http://openocd.org/doc/doxygen/bugs.html
-rt_thread_idle_entry (parameter=0x0) at D:\workspace\Sourcecode\rt-thread\src\idle.c:251
-251                 if (idle_hook_list[i] != RT_NULL)
-cleared protection for sectors 0 through 127 on flash bank 0
+0x20000340 in ?? ()
+cleared protection for sectors 0 through 63 on flash bank 0
 
-Loading section .init, size 0x264 lma 0x8000000
-Loading section .text, size 0x140de lma 0x8000280
-Loading section .rodata, size 0x37c0 lma 0x8014360
-Loading section .data, size 0x404 lma 0x8017b20
-Start address 0x800015c, load size 98054
-Transfer rate: 8 KB/sec, 10894 bytes/write.
+Loading section .init, size 0x1c0 lma 0x80000000
+Loading section .text, size 0xb0c0 lma 0x800001c0
+Loading section .rodata, size 0x2af0 lma 0x8000b280
+Loading section .data, size 0x244 lma 0x8000dd70
+Start address 0x800000cc, load size 57268
+Transfer rate: 50 KB/sec, 9544 bytes/write.
 shutdown command invoked
 A debugging session is active.
 
@@ -112,7 +114,7 @@ initialize rti_board_start:0 done
 
  \ | /
 - RT -     Thread Operating System
- / | \     4.0.3 build Apr  9 2020
+ / | \     4.0.3 build Apr 23 2020
  2006 - 2020 Copyright by rt-thread team
 do components initialization.
 initialize rti_board_end:0 done
@@ -145,9 +147,9 @@ msh />
 
 ~~~
 scons: Reading SConscript files ...
-Supported downloaded modes for board gd32vf103v_rvstar are flashxip, chosen downloaded mode is flashxip
+Supported downloaded modes for board hbird_eval are ('ilm', 'flash', 'flashxip'), chosen downloaded mode is ilm
 Debug application rtthread.elf using openocd and gdb
-riscv-nuclei-elf-gdb rtthread.elf -ex "set remotetimeout 240"                     -ex "target remote | openocd --pipe -f D:/workspace/Sourcecode/rt-thread/bsp/nuclei/gd32vf103_rvstar/packages/nuclei_sdk-latest/SoC/gd32vf103/Board/gd32vf103v_rvstar/openocd_gd32vf103.cfg"
+riscv-nuclei-elf-gdb rtthread.elf -ex "set remotetimeout 240"                     -ex "target remote | openocd --pipe -f D:/workspace/Sourcecode/rt-thread/bsp/nuclei/hbird_eval/packages/nuclei_sdk-latest/SoC/hbird/Board/hbird_eval/openocd_hbird.cfg"
 D:\Software\Nuclei\gcc\bin\riscv-nuclei-elf-gdb.exe: warning: Couldn't determine a path for the index cache directory.
 GNU gdb (GDB) 8.3.0.20190516-git
 Copyright (C) 2019 Free Software Foundation, Inc.
@@ -165,21 +167,27 @@ Find the GDB manual and other documentation resources online at:
 For help, type "help".
 Type "apropos word" to search for commands related to "word"...
 Reading symbols from rtthread.elf...
-Remote debugging using | openocd --pipe -f D:/workspace/Sourcecode/rt-thread/bsp/nuclei/gd32vf103_rvstar/packages/nuclei_sdk-latest/SoC/gd32vf103/Board/gd32vf103v_rvstar/openocd_gd32vf103.cfg Nuclei OpenOCD, 64-bit Open On-Chip Debugger 0.10.0+dev-00014-g0eae03214 (2019-12-12-07:43)
+Remote debugging using | openocd --pipe -f D:/workspace/Sourcecode/rt-thread/bsp/nuclei/hbird_eval/packages/nuclei_sdk-latest/SoC/hbird/Board/hbird_eval/openocd_hbird.cfg
+Nuclei OpenOCD, 64-bit Open On-Chip Debugger 0.10.0+dev-00014-g0eae03214 (2019-12-12-07:43)
 Licensed under GNU GPL v2
 For bug reports, read
         http://openocd.org/doc/doxygen/bugs.html
-rt_thread_idle_entry (parameter=0x0) at D:\workspace\Sourcecode\rt-thread\src\idle.c:249
-249             for (i = 0; i < RT_IDLE_HOOK_LIST_SIZE; i++)
-(gdb)
-(gdb) b main.c:35
-Breakpoint 1 at 0x8000290: file applications\main.c, line 35.
+0x80000d38 in rt_thread_idle_excute () at D:\workspace\Sourcecode\rt-thread\src\idle.c:153
+153         while (_has_defunct_thread())
+(gdb) load
+Loading section .init, size 0x1c0 lma 0x80000000
+Loading section .text, size 0xb0c0 lma 0x800001c0
+Loading section .rodata, size 0x2af0 lma 0x8000b280
+Loading section .data, size 0x244 lma 0x8000dd70
+Start address 0x800000cc, load size 57268
+Transfer rate: 49 KB/sec, 9544 bytes/write.
+(gdb) b main
+Breakpoint 1 at 0x800001c0: file applications\main.c, line 80.
 (gdb) c
 Continuing.
-Note: automatically using hardware breakpoints for read-only addresses.
 
-Breakpoint 1, thread_entry (parameter=0x0) at applications\main.c:35
-35              rt_thread_mdelay(500);
+Breakpoint 1, main () at applications\main.c:80
+80          board_gpio_init();
 (gdb)
 ~~~
 
@@ -188,19 +196,20 @@ Breakpoint 1, thread_entry (parameter=0x0) at applications\main.c:35
 * https://doc.nucleisys.com/nuclei_sdk/quickstart.html#debug-application
 
 为了更方便的进行调试, 也可以下载**Nuclei Studio**集成开发环境, 创建一个Debug Configuration, 选择编译好的
-ELF文件, 然后配置OPENOCD和GDB即可, OPENOCD配置文件路径为**bsp\nuclei\gd32vf103_rvstar\packages\nuclei_sdk-latest\SoC\gd32vf103\Board\gd32vf103v_rvstar\openocd_gd32vf103.cfg**
+ELF文件, 然后配置OPENOCD和GDB即可, OPENOCD配置文件路径为**bsp\nuclei\hbird_eval\packages\nuclei_sdk-latest\SoC\hbird\Board\hbird_eval\openocd_hbird.cfg**
 
 
 ## 驱动支持情况
 
 | 驱动 | 支持情况  |  备注  |
 | ------ | ----  | :------:  |
-| UART | 支持 | RV-STAR板载串口是UART4 |
+| UART | 支持 | 蜂鸟开发板载串口是UART0 |
 
 **注:**
 
-- 适配RT-Thread的驱动框架的代码在 [../libraries/gd32vf103/HAL_Drivers](../libraries/gd32vf103/HAL_Drivers)目录下。
+- 适配RT-Thread的驱动框架的代码在 [../libraries/hbird/HAL_Drivers](../libraries/hbird/HAL_Drivers)目录下。
 - 如果有开发者想适配更多的驱动, 请在对应目录下增加驱动适配支持。
+- 目前串口读取功能还是异常，需要硬件核定
 
 ## 联系人信息
 
