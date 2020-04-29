@@ -26,15 +26,6 @@ enum
 #ifdef BSP_USING_UART1
     UART1_INDEX,
 #endif
-#ifdef BSP_USING_UART2
-    UART2_INDEX,
-#endif
-#ifdef BSP_USING_UART3
-    UART3_INDEX,
-#endif
-#ifdef BSP_USING_UART4
-    UART4_INDEX,
-#endif
 };
 
 static struct hbird_uart_config uart_config[] =
@@ -43,16 +34,14 @@ static struct hbird_uart_config uart_config[] =
     {
         "uart0",
         UART0,
-        SOC_INT35_IRQn,
-        SOC_INT36_IRQn,
+        SOC_INT19_IRQn,
     },
 #endif
 #ifdef BSP_USING_UART1
     {
         "uart1",
         UART1,
-        SOC_INT43_IRQn,
-        SOC_INT44_IRQn,
+        SOC_INT20_IRQn,
     },
 #endif
 };
@@ -103,11 +92,13 @@ static rt_err_t hbird_control(struct rt_serial_device *serial, int cmd,
     switch (cmd)
     {
     case RT_DEVICE_CTRL_CLR_INT:
-        ECLIC_DisableIRQ(uart_cfg->rx_irqn);
+        ECLIC_DisableIRQ(uart_cfg->irqn);
         uart_disable_rxint(uart_cfg->uart);
         break;
     case RT_DEVICE_CTRL_SET_INT:
-        ECLIC_EnableIRQ(uart_cfg->rx_irqn);
+        ECLIC_EnableIRQ(uart_cfg->irqn);
+        ECLIC_SetShvIRQ(uart_cfg->irqn, ECLIC_NON_VECTOR_INTERRUPT);
+        ECLIC_SetLevelIRQ(uart_cfg->irqn, 1);
         uart_enable_rxint(uart_cfg->uart);
         break;
     }
@@ -142,7 +133,7 @@ static int hbird_getc(struct rt_serial_device *serial)
     RT_ASSERT(uart_cfg != RT_NULL);
 
     ch = -1;
-    if (! (uart_cfg->uart->RXFIFO & UART_RXFIFO_EMPTY)) {
+    if ((uart_cfg->uart->RXFIFO & UART_RXFIFO_EMPTY) != UART_RXFIFO_EMPTY) {
         ch = (int)(uint8_t)(uart_cfg->uart->RXFIFO);
     }
     return ch;
@@ -153,20 +144,28 @@ static const struct rt_uart_ops hbird_uart_ops = { hbird_configure, hbird_contro
            RT_NULL
 };
 
-static void uart_rx_isr(struct rt_serial_device *serial)
+static void gd32_uart_isr(struct rt_serial_device *serial)
 {
-    RT_ASSERT(serial != RT_NULL);
+    struct hbird_uart *uart_obj;
+    struct hbird_uart_config *uart_cfg;
 
-    rt_hw_serial_isr(serial, RT_SERIAL_EVENT_RX_IND);
+    RT_ASSERT(serial != RT_NULL);
+    uart_obj = (struct hbird_uart *) serial->parent.user_data;
+    uart_cfg = uart_obj->config;
+    RT_ASSERT(uart_cfg != RT_NULL);
+
+    if (uart_cfg->uart->IP & UART_IP_RXIP_MASK) {
+        rt_hw_serial_isr(serial, RT_SERIAL_EVENT_RX_IND);
+    }
 }
 
 #ifdef BSP_USING_UART0
 
-void eclic_irq35_handler(void)
+void eclic_irq19_handler(void)
 {
     rt_interrupt_enter();
 
-    uart_rx_isr(&uart_obj[UART0_INDEX].serial);
+    gd32_uart_isr(&uart_obj[UART0_INDEX].serial);
 
     rt_interrupt_leave();
 }
@@ -175,16 +174,41 @@ void eclic_irq35_handler(void)
 
 #ifdef BSP_USING_UART1
 
-void eclic_irq43_handler(void)
+void eclic_irq20_handler(void)
 {
     rt_interrupt_enter();
 
-    uart_rx_isr(&uart_obj[UART1_INDEX].serial);
+    gd32_uart_isr(&uart_obj[UART1_INDEX].serial);
 
     rt_interrupt_leave();
 }
 
 #endif
+
+#define SERIAL_THREAD_STACK_SIZE 396
+static rt_uint8_t serial_stack[SERIAL_THREAD_STACK_SIZE];
+struct rt_thread serial_tid;
+
+static void serial_thread_entry(void *parameter)
+{
+    struct hbird_uart_config *uart_cfg;
+
+    while (1) {
+#ifdef BSP_USING_UART0
+    uart_cfg = uart_obj[UART0_INDEX].config;
+    if (uart_cfg->uart->IP & UART_IP_RXIP_MASK) {
+        gd32_uart_isr(&uart_obj[UART0_INDEX].serial);
+    }
+#endif
+#ifdef BSP_USING_UART1
+    uart_cfg = uart_obj[UART1_INDEX].config;
+    if (uart_cfg->uart->IP & UART_IP_RXIP_MASK) {
+        gd32_uart_isr(&uart_obj[UART1_INDEX].serial);
+    }
+#endif
+        rt_thread_mdelay(50);
+    }
+}
 
 int rt_hw_uart_init(void)
 {
@@ -210,6 +234,8 @@ int rt_hw_uart_init(void)
         RT_ASSERT(result == RT_EOK);
     }
 
+    // rt_thread_init(&serial_tid, "serial_rx", serial_thread_entry, (void *)NULL, serial_stack,
+    //                SERIAL_THREAD_STACK_SIZE, 5, 5);
     return result;
 }
 

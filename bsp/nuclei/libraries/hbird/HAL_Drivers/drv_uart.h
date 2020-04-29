@@ -19,8 +19,7 @@ struct hbird_uart_config
 {
     const char *name;
     UART_TypeDef *uart;
-    IRQn_Type rx_irqn;
-    IRQn_Type tx_irqn;
+    IRQn_Type irqn;
 };
 
 /* hbird uart dirver class */
