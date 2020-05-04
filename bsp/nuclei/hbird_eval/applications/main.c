@@ -79,6 +79,8 @@ int main(void)
 
     board_gpio_init();
     create_thread_demo();
+    extern struct rt_thread serial_tid;
+    // rt_thread_startup(&serial_tid);
 
     while (1) {
 #ifdef APP_DEBUG_PRINT
