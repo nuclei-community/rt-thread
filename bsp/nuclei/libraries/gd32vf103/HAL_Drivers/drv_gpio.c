@@ -515,6 +515,7 @@ int rt_hw_pin_init(void)
     rcu_periph_clock_enable(RCU_AF);
     return rt_device_pin_register("pin", &_gd32_pin_ops, RT_NULL);
 }
-INIT_BOARD_EXPORT(rt_hw_pin_init);
+
+INIT_DEVICE_EXPORT(rt_hw_pin_init);
 
 #endif /* RT_USING_PIN */

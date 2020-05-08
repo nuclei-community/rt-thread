@@ -14,6 +14,15 @@ if GetDepend(['RT_USING_PIN']):
 if GetDepend(['RT_USING_SERIAL']):
     src += ['drv_usart.c']
 
+if GetDepend(['RT_USING_I2C']):
+    src += ['drv_i2c.c']
+
+if GetDepend(['RT_USING_SPI']):
+    src += ['drv_spi.c']
+
+if GetDepend(['RT_USING_HWTIMER']):
+    src += ['drv_hwtimer.c']
+
 path =  [cwd]
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path)
