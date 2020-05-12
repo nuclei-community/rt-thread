@@ -5,10 +5,11 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2018-12-10     zylx         first version
+ * 2020-05-12     hqfang       first version
  */
 
 #include "drv_hwtimer.h"
+
 #ifdef BSP_USING_HWTIMER
 
 #if !defined(BSP_USING_HWTIMER0) && !defined(BSP_USING_HWTIMER1) && !defined(BSP_USING_HWTIMER2) \
@@ -21,49 +22,49 @@ static struct gd32_hwtimer_config hwtimer_config[] =
 {
 #ifdef BSP_USING_HWTIMER0
     {
-        "hwtimer0",
+        "timer0",
         TIMER0,
         TIMER0_UP_IRQn,
     },
 #endif
 #ifdef BSP_USING_HWTIMER1
     {
-        "hwtimer1",
+        "timer1",
         TIMER1,
         TIMER1_IRQn,
     },
 #endif
 #ifdef BSP_USING_HWTIMER2
     {
-        "hwtimer2",
+        "timer2",
         TIMER2,
         TIMER2_IRQn,
     },
 #endif
 #ifdef BSP_USING_HWTIMER3
     {
-        "hwtimer3",
+        "timer3",
         TIMER3,
         TIMER3_IRQn,
     },
 #endif
 #ifdef BSP_USING_HWTIMER4
     {
-        "hwtimer4",
+        "timer4",
         TIMER4,
         TIMER4_IRQn,
     },
 #endif
 #ifdef BSP_USING_HWTIMER5
     {
-        "hwtimer5",
+        "timer5",
         TIMER5,
         TIMER5_IRQn,
     },
 #endif
 #ifdef BSP_USING_HWTIMER6
     {
-        "hwtimer6",
+        "timer6",
         TIMER6,
         TIMER6_IRQn,
     },
@@ -85,9 +86,19 @@ static rt_err_t gd32_hwtimer_control(rt_hwtimer_t *timer, rt_uint32_t cmd, void 
     case HWTIMER_CTRL_FREQ_SET:
     {
         uint32_t clk;
+        uint8_t clkpre;
         uint32_t pre;
-        clk = rcu_clock_freq_get(CK_APB1);
-        pre = clk / *((uint32_t *)args) - 1;
+        if (config->timer_periph != TIMER0) {
+            clk = rcu_clock_freq_get(CK_APB1);
+            clkpre = GET_BITS(RCU_CFG0, 8, 10);
+        } else {
+            clk = rcu_clock_freq_get(CK_APB2);
+            clkpre = GET_BITS(RCU_CFG0, 11, 13);
+        }
+        if (clkpre >= 4) {
+            clk = clk * 2;
+        }
+        pre = (clk / *((uint32_t *)args)) - 1;
         TIMER_PSC(config->timer_periph) = (uint32_t)pre;
     }
     break;
@@ -123,8 +134,13 @@ static void gd32_hwtimer_init(rt_hwtimer_t *timer, rt_uint32_t state)
 
     if (state == 1)
     {
+        timer_deinit(config->timer_periph);
         timer_struct_para_init(&initpara);
         timer_init(config->timer_periph, &initpara);
+    } else {
+        timer_disable(config->timer_periph);
+        timer_interrupt_enable(config->timer_periph, TIMER_INT_FLAG_UP);
+        ECLIC_DisableIRQ(config->irqn);
     }
 }
 
@@ -139,6 +155,7 @@ static rt_err_t gd32_hwtimer_start(rt_hwtimer_t *timer, rt_uint32_t cnt, rt_hwti
     } else {
         timer_single_pulse_mode_config(config->timer_periph, TIMER_SP_MODE_REPETITIVE);
     }
+    timer_counter_value_config(config->timer_periph, 0);
     timer_autoreload_value_config(config->timer_periph, cnt);
     timer_interrupt_enable(config->timer_periph, TIMER_INT_FLAG_UP);
     timer_enable(config->timer_periph);
@@ -169,9 +186,9 @@ static const struct rt_hwtimer_ops gd32_hwtimer_ops =
 
 static const struct rt_hwtimer_info gd32_hwtimer_info =
 {
-    25000000,           /* the maximum count frequency can be set */
-    6103,               /* the minimum count frequency can be set */
-    0xFFFFFFFF,
+    54000000,           /* the maximum count frequency can be set */
+    1000,               /* the minimum count frequency can be set */
+    0xFFFF,
     HWTIMER_CNTMODE_UP,
 };
 
@@ -276,8 +293,9 @@ static int rt_hwtimer_init(void)
     {
         hwtimer_obj[i].time_device.info = &gd32_hwtimer_info;
         hwtimer_obj[i].time_device.ops  = &gd32_hwtimer_ops;
+        hwtimer_obj[i].config = &hwtimer_config[i];
         rt_device_hwtimer_register(&hwtimer_obj[i].time_device, \
-            hwtimer_obj[i].config->name, &hwtimer_obj[i].config);
+            hwtimer_obj[i].config->name, hwtimer_obj[i].config);
     }
 
     return result;
