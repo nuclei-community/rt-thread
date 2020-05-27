@@ -5,7 +5,7 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2029-04-27     hqfang       first implementation.
+ * 2020-04-27     hqfang       first implementation.
  */
 
 #ifndef __DRV_I2C__
@@ -26,8 +26,8 @@ struct gd32_i2c_config
 
 struct gd32_i2c
 {
-    struct gd32_i2c_config *config;
     struct rt_i2c_bus_device bus; 
+    struct gd32_i2c_config *config;
 };
 
 #endif
