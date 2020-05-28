@@ -37,6 +37,8 @@ static struct gd32_i2c_config i2c_config[] =
 
 static struct gd32_i2c i2c_obj[sizeof(i2c_config) / sizeof(i2c_config[0])] = {0};
 
+#define GD32_I2C_TIMEOUT    10
+
 static int gd32_i2c_read(rt_uint32_t i2c_periph, rt_uint16_t slave_address, rt_uint8_t* p_buffer, rt_uint16_t cnt)
 {
     /* send slave address to I2C bus */
@@ -54,8 +56,6 @@ static int gd32_i2c_read(rt_uint32_t i2c_periph, rt_uint16_t slave_address, rt_u
         if (cnt == 1) {
             // Send NACK for last 1 byte receive
             i2c_ack_config(i2c_periph, I2C_ACK_DISABLE);
-            /* send a stop condition to I2C bus */
-            // i2c_stop_on_bus(i2c_periph);
         }
         /* wait until the RBNE bit is set */
         while (i2c_flag_get(i2c_periph, I2C_FLAG_RBNE) == RESET);
@@ -69,8 +69,7 @@ static int gd32_i2c_read(rt_uint32_t i2c_periph, rt_uint16_t slave_address, rt_u
         /* decrement the read bytes counter */
         cnt--;
     }
-    /* wait until the stop condition is finished */
-    // while(I2C_CTL0(i2c_periph) & I2C_CTL0_STOP);
+
     return 0;
 }
 
@@ -102,11 +101,6 @@ static int gd32_i2c_write(rt_uint32_t i2c_periph, uint16_t slave_address, uint8_
         /* wait until BTC bit is set */
         while(!i2c_flag_get(i2c_periph, I2C_FLAG_BTC));
     }
-    // /* send a stop condition to I2C bus */
-    // i2c_stop_on_bus(i2c_periph);
-
-    // /* wait until the stop condition is finished */
-    // while(I2C_CTL0(i2c_periph) & I2C_CTL0_STOP);
 
     return 0;
 }
