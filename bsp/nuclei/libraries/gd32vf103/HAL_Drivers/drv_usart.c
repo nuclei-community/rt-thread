@@ -320,6 +320,22 @@ int rt_hw_usart_init(void)
     rt_size_t obj_num;
     int index;
 
+#ifdef BSP_USING_UART0
+    rcu_periph_clock_enable(RCU_USART0);
+#endif
+#ifdef BSP_USING_UART1
+    rcu_periph_clock_enable(RCU_USART1);
+#endif
+#ifdef BSP_USING_UART2
+    rcu_periph_clock_enable(RCU_USART2);
+#endif
+#ifdef BSP_USING_UART3
+    rcu_periph_clock_enable(RCU_UART3);
+#endif
+#ifdef BSP_USING_UART4
+    rcu_periph_clock_enable(RCU_UART4);
+#endif
+
     obj_num = sizeof(uart_obj) / sizeof(struct gd32_uart);
     struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
     rt_err_t result = 0;
