@@ -5,7 +5,7 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2020-04-29     hqfang       first implementation.
+ * 2020-05-28     hqfang       first implementation.
  */
 
 #include "drv_spi.h"
@@ -53,7 +53,7 @@ static rt_err_t gd32_spi_init(rt_uint32_t spi_periph, struct rt_spi_configuratio
 
     if(cfg->data_width != 8 && cfg->data_width != 16)
     {
-        return (-RT_EINVAL); 
+        return (-RT_EINVAL);
     }
 
     switch (spi_periph) {
@@ -62,7 +62,7 @@ static rt_err_t gd32_spi_init(rt_uint32_t spi_periph, struct rt_spi_configuratio
         break;
     default:
         apbfreq = rcu_clock_freq_get(CK_APB1);
-        break;    
+        break;
     }
 
     scale = apbfreq / cfg->max_hz;
@@ -106,22 +106,24 @@ static rt_err_t gd32_spi_init(rt_uint32_t spi_periph, struct rt_spi_configuratio
         spicfg.clock_polarity_phase |= SPI_CTL0_CKPL;
     }
 
-    if (cfg->mode & RT_SPI_MASTER) {
-        spicfg.device_mode = SPI_MASTER;
-    } else if (cfg->mode & RT_SPI_SLAVE) {
+    if (cfg->mode & RT_SPI_SLAVE) {
         spicfg.device_mode = SPI_SLAVE;
+    } else {
+        spicfg.device_mode = SPI_MASTER;
     }
-    spicfg.nss = SPI_NSS_HARD;
+    spicfg.nss = SPI_NSS_SOFT;
     spicfg.trans_mode = SPI_TRANSMODE_FULLDUPLEX;
 
     spi_init(spi_periph, &spicfg);
+    /* set crc polynomial */
+    spi_crc_polynomial_set(spi_periph, 7);
 
     return RT_EOK;
 }
 
 static rt_err_t gd32_spi_configure(struct rt_spi_device *device, struct rt_spi_configuration *cfg)
 {
-    rt_err_t ret = RT_EOK; 
+    rt_err_t ret = RT_EOK;
     RT_ASSERT(device != RT_NULL);
 
     struct gd32_spi *spi_obj = (struct gd32_spi *)(device->bus->parent.user_data);
@@ -139,42 +141,51 @@ static rt_err_t gd32_spi_configure(struct rt_spi_device *device, struct rt_spi_c
   */
 rt_err_t rt_hw_spi_device_attach(const char *bus_name, const char *device_name, rt_uint32_t pin)
 {
-    rt_err_t ret = RT_EOK; 
-    
-    struct rt_spi_device *spi_device = (struct rt_spi_device *)rt_malloc(sizeof(struct rt_spi_device)); 
-    RT_ASSERT(spi_device != RT_NULL); 
+    rt_err_t ret = RT_EOK;
 
-    struct gd32_spi_cs *cs_pin = (struct gd32_spi_cs *)rt_malloc(sizeof(struct gd32_spi_cs)); 
+    struct rt_spi_device *spi_device = (struct rt_spi_device *)rt_malloc(sizeof(struct rt_spi_device));
+    RT_ASSERT(spi_device != RT_NULL);
+
+    struct gd32_spi_cs *cs_pin = (struct gd32_spi_cs *)rt_malloc(sizeof(struct gd32_spi_cs));
     RT_ASSERT(cs_pin != RT_NULL);
-    
+
     cs_pin->pin = pin;
-    rt_pin_mode(pin, PIN_MODE_OUTPUT); 
-    rt_pin_write(pin, PIN_HIGH); 
-    
-    ret = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)cs_pin); 
-    
-    return ret; 
+    rt_pin_mode(pin, PIN_MODE_OUTPUT);
+    rt_pin_write(pin, PIN_HIGH);
+
+    ret = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)cs_pin);
+
+    return ret;
 }
 
 rt_size_t gd32_spi_transmit(rt_uint32_t spi_periph, const void *send_buf, void *recv_buf, rt_size_t length)
 {
     uint8_t *send_buf_8b = (uint8_t *)send_buf;
     uint8_t *recv_buf_8b = (uint8_t *)recv_buf;
+    uint8_t sndbyte = 0xFF, rcvbyte;
     rt_size_t idx = 0;
 
     while (idx < length) {
         while(RESET == spi_i2s_flag_get(spi_periph, SPI_FLAG_TBE));
-        spi_i2s_data_transmit(spi_periph, send_buf_8b[idx]);
+        if (send_buf_8b) {
+            sndbyte = send_buf_8b[idx];
+        }
+        spi_i2s_data_transmit(spi_periph, sndbyte);
         while(RESET == spi_i2s_flag_get(spi_periph, SPI_FLAG_RBNE));
-        recv_buf_8b[idx] = spi_i2s_data_receive(spi_periph);
+        rcvbyte = spi_i2s_data_receive(spi_periph);
+        if (recv_buf_8b) {
+            recv_buf_8b[idx] = rcvbyte;
+        }
         idx ++;
     }
+    // Wait for transmission complete
+    // while(SET == spi_i2s_flag_get(spi_periph, SPI_FLAG_TRANS));
+
     return length;
 }
 
 static rt_uint32_t gd32_spi_xfer(struct rt_spi_device *device, struct rt_spi_message *message)
 {
-    struct rt_spi_message *curmsg;
     rt_uint32_t total_length = 0;
     rt_err_t ret = RT_EOK;
 
@@ -183,27 +194,26 @@ static rt_uint32_t gd32_spi_xfer(struct rt_spi_device *device, struct rt_spi_mes
     struct gd32_spi *spi_obj = (struct gd32_spi *)(device->bus->parent.user_data);
     struct gd32_spi_config *spi_cfg = (struct gd32_spi_config *)(spi_obj->config);
     RT_ASSERT(spi_cfg != RT_NULL);
-    struct gd32_spi_cs *cs = (struct gd32_spi_cs *)(device->parent.user_data); 
+    struct gd32_spi_cs *cs = (struct gd32_spi_cs *)(device->parent.user_data);
 
-    while (message) {
-        if(message->cs_take)
-        {
-            rt_pin_write(cs->pin, PIN_LOW);
-        }
+    if(message && message->cs_take)
+    {
+        rt_pin_write(cs->pin, PIN_LOW);
+    }
+    if (message && message->length) {
+
         total_length += gd32_spi_transmit(spi_cfg->spi_periph, message->send_buf, \
                                             message->recv_buf, message->length);
-        if(message->cs_release)
-        {
-            rt_pin_write(cs->pin, PIN_HIGH);
-        }
-        message = message->next;
     }
-    
+    if(message && message->cs_release)
+    {
+        rt_pin_write(cs->pin, PIN_HIGH);
+    }
     return total_length;
 }
 
 static const struct rt_spi_ops spi_ops =
-{ 
+{
     gd32_spi_configure,
     gd32_spi_xfer
 };
@@ -214,11 +224,22 @@ int rt_hw_spi_init(void)
     int index;
     rt_err_t result = 0;
 
+#ifdef BSP_USING_SPI0
+    rcu_periph_clock_enable(RCU_SPI0);
+#endif
+#ifdef BSP_USING_SPI1
+    rcu_periph_clock_enable(RCU_SPI1);
+#endif
+#ifdef BSP_USING_SPI2
+    rcu_periph_clock_enable(RCU_SPI2);
+#endif
+
     obj_num = sizeof(spi_obj) / sizeof(struct gd32_spi);
     for (index = 0; index < obj_num; index++)
     {
         /* init spi object */
         spi_obj[index].config = &spi_config[index];
+        spi_obj[index].bus.parent.user_data = &spi_obj[index];
 
         /* register spi device */
         result = rt_spi_bus_register(&spi_obj[index].bus,

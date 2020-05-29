@@ -30,8 +30,8 @@ struct gd32_spi_cs
 
 struct gd32_spi
 {
+    struct rt_spi_bus bus;
     struct gd32_spi_config *config;
-    struct rt_spi_bus bus; 
 };
 
 int rt_hw_spi_init(void);
