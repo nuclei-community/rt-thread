@@ -64,8 +64,8 @@ static struct gd32_uart_config uart_config[] =
 #ifdef BSP_USING_UART3
     {
         "uart3",
-        USART3,
-        USART3_IRQn,
+        UART3,
+        UART3_IRQn,
     },
 #endif
 #ifdef BSP_USING_UART4
@@ -137,7 +137,7 @@ static rt_err_t gd32_configure(struct rt_serial_device *serial,
         break;
     }
     usart_hardware_flow_rts_config(usart->uart_base, USART_RTS_DISABLE);
-    usart_hardware_flow_cts_config(usart->uart_base, USART_RTS_DISABLE);
+    usart_hardware_flow_cts_config(usart->uart_base, USART_CTS_DISABLE);
     usart_receive_config(usart->uart_base, USART_RECEIVE_ENABLE);
     usart_transmit_config(usart->uart_base, USART_TRANSMIT_ENABLE);
     usart_enable(usart->uart_base);
