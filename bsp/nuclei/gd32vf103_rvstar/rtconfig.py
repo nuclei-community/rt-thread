@@ -41,13 +41,13 @@ if PLATFORM == 'gcc':
     CFLAGS  = ' -ffunction-sections -fdata-sections -fno-common '
     AFLAGS  = CFLAGS
     LFLAGS  = ' --specs=nano.specs --specs=nosys.specs -nostartfiles -Wl,--gc-sections '
-    LFLAGS += ' -Wl,-cref,-Map=rtthread.map'
+    LFLAGS  += ' -Wl,-cref,-Map=rtthread.map'
     LFLAGS  += ' -u _isatty -u _write -u _sbrk -u _read -u _close -u _fstat -u _lseek '
     CPATH   = ''
     LPATH   = ''
 
     if BUILD == 'debug':
-        CFLAGS += ' -O0 -ggdb'
+        CFLAGS += ' -Os -ggdb'
         AFLAGS += ' -ggdb'
     else:
         CFLAGS += ' -O2 -Os'
