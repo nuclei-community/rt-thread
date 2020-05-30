@@ -26,8 +26,8 @@ struct gd32_hwtimer_config
 
 struct gd32_hwtimer
 {
-    struct gd32_hwtimer_config *config;
     rt_hwtimer_t time_device;
+    struct gd32_hwtimer_config *config;
 };
 
 #endif
