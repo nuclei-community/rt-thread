@@ -9,7 +9,7 @@
  */
 
 #include "drv_pwm.h"
-#define DBG_LVL               DBG_INFO
+// #define DBG_LVL               DBG_INFO
 
 #include <rtdbg.h>
 
