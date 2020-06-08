@@ -90,7 +90,8 @@ static rt_err_t gd32_wdog_control(rt_watchdog_t *wdt, int cmd, void *args)
     {
         RT_ASSERT(*(uint16_t *)args != 0);
         reload_value = *(uint16_t *)args;
-        reload_value = reload_value * 156;
+        // 6.4ms 1 tick, 1s -> 1000 / 6.4 = 625 / 4 ticks
+        reload_value = ((uint32_t)reload_value * 625) / 4;
         fwdgt_write_enable();
         while(FWDGT_STAT & FWDGT_STAT_RUD);
         FWDGT_RLD = FWDGT_RLD_RLD & reload_value;
