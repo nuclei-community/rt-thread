@@ -5,29 +5,25 @@ ARCH='risc-v'
 CPU='nuclei'
 CROSS_TOOL='gcc'
 
-# bsp lib config
-BSP_LIBRARY_TYPE = None
-
 if os.getenv('RTT_CC'):
     CROSS_TOOL = os.getenv('RTT_CC')
 
 if CROSS_TOOL == 'gcc':
-    PLATFORM  = 'gcc'
-    EXEC_PATH = 'D:/Software/Nuclei/gcc/bin'
+    PLATFORM 	= 'gcc'
+    EXEC_PATH 	= 'D:/Software/Nuclei/gcc/bin'
 else:
     print("CROSS_TOOL = {} not yet supported" % CROSS_TOOL)
 
 # if os.getenv('RTT_EXEC_PATH'):
-#     EXEC_PATH = os.getenv('RTT_EXEC_PATH')
+# 	EXEC_PATH = os.getenv('RTT_EXEC_PATH')
 
 BUILD = 'debug'
-
 # Fixed configurations below
-NUCLEI_SDK_OPENOCD_CFG = "type in your config"
-NUCLEI_SDK_SOC = "gd32vf103"
-NUCLEI_SDK_BOARD = "gd32vf103v_rvstar"
-NUCLEI_SDK_DOWNLOAD = "flashxip"
-NUCLEI_SDK_CORE = "n205"
+NUCLEI_SDK_SOC = "hbird"
+NUCLEI_SDK_BOARD = "hbird_eval"
+# Configurable options below
+NUCLEI_SDK_DOWNLOAD = "ilm"
+NUCLEI_SDK_CORE = "nx600"
 
 if PLATFORM == 'gcc':
     # toolchains
@@ -46,14 +42,13 @@ if PLATFORM == 'gcc':
     CFLAGS  = ' -ffunction-sections -fdata-sections -fno-common '
     AFLAGS  = CFLAGS
     LFLAGS  = ' --specs=nano.specs --specs=nosys.specs -nostartfiles -Wl,--gc-sections '
-    LFLAGS  += ' -Wl,-cref,-Map=rtthread.map '
+    LFLAGS += ' -Wl,-cref,-Map=rtthread.map'
     LFLAGS  += ' -u _isatty -u _write -u _sbrk -u _read -u _close -u _fstat -u _lseek '
     CPATH   = ''
     LPATH   = ''
-    LIBS = ['stdc++']
 
     if BUILD == 'debug':
-        CFLAGS += ' -O2 -Os -ggdb'
+        CFLAGS += ' -O2 -ggdb'
         AFLAGS += ' -ggdb'
     else:
         CFLAGS += ' -O2 -Os'
@@ -62,10 +57,3 @@ if PLATFORM == 'gcc':
 
 DUMP_ACTION = OBJDUMP + ' -D -S $TARGET > rtt.asm\n'
 POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
-
-def dist_handle(BSP_ROOT):
-    import sys
-    cwd_path = os.getcwd()
-    sys.path.append(os.path.join(os.path.dirname(BSP_ROOT), 'tools'))
-    from sdk_dist import dist_do_building
-    dist_do_building(BSP_ROOT)

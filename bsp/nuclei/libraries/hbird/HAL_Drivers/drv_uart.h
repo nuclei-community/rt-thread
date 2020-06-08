@@ -14,22 +14,22 @@
 #include <rtdevice.h>
 #include <drv_config.h>
 
-/* gd32 config class */
-struct gd32_uart_config
+/* config class */
+struct hbird_uart_config
 {
     const char *name;
-    uint32_t uart_base;
+    UART_TypeDef *uart;
     IRQn_Type irqn;
 };
 
-/* gd32 uart dirver class */
-struct gd32_uart
+/* hbird uart dirver class */
+struct hbird_uart
 {
+    struct hbird_uart_config *config;
     struct rt_serial_device serial;
-    struct gd32_uart_config *config;
 };
 
-int rt_hw_usart_init(void);
+int rt_hw_uart_init(void);
 
 #endif /* __DRV_USART_H__ */
 

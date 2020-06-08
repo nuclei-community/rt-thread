@@ -20,7 +20,6 @@
 #define RT_TIMER_THREAD_PRIO 4
 #define RT_TIMER_THREAD_STACK_SIZE 512
 #define RT_DEBUG
-#define RT_DEBUG_COLOR
 #define RT_DEBUG_INIT_CONFIG
 #define RT_DEBUG_INIT 1
 
@@ -43,16 +42,15 @@
 #define RT_USING_DEVICE
 #define RT_USING_CONSOLE
 #define RT_CONSOLEBUF_SIZE 128
-#define RT_CONSOLE_DEVICE_NAME "uart4"
+#define RT_CONSOLE_DEVICE_NAME "uart0"
 #define RT_VER_NUM 0x40003
 #define ARCH_RISCV
-#define ARCH_RISCV32
 
 /* RT-Thread Components */
 
 #define RT_USING_COMPONENTS_INIT
 #define RT_USING_USER_MAIN
-#define RT_MAIN_THREAD_STACK_SIZE 1024
+#define RT_MAIN_THREAD_STACK_SIZE 2048
 #define RT_MAIN_THREAD_PRIORITY 10
 
 /* C++ features */
@@ -67,25 +65,28 @@
 #define FINSH_USING_SYMTAB
 #define FINSH_USING_DESCRIPTION
 #define FINSH_THREAD_PRIORITY 20
-#define FINSH_THREAD_STACK_SIZE 2048
+#define FINSH_THREAD_STACK_SIZE 4096
 #define FINSH_CMD_SIZE 80
 #define FINSH_USING_MSH
 #define FINSH_USING_MSH_DEFAULT
+#define FINSH_USING_MSH_ONLY
 #define FINSH_ARG_MAX 10
 
 /* Device virtual file system */
 
+#define RT_USING_DFS
+#define DFS_USING_WORKDIR
+#define DFS_FILESYSTEMS_MAX 2
+#define DFS_FILESYSTEM_TYPES_MAX 2
+#define DFS_FD_MAX 16
+#define RT_USING_DFS_DEVFS
 
 /* Device Drivers */
 
 #define RT_USING_DEVICE_IPC
 #define RT_PIPE_BUFSZ 512
-#define RT_USING_SYSTEM_WORKQUEUE
-#define RT_SYSTEM_WORKQUEUE_STACKSIZE 2048
-#define RT_SYSTEM_WORKQUEUE_PRIORITY 23
 #define RT_USING_SERIAL
 #define RT_SERIAL_RB_BUFSZ 64
-#define RT_USING_PIN
 
 /* Using USB */
 
@@ -93,6 +94,7 @@
 /* POSIX layer and C standard library */
 
 #define RT_USING_LIBC
+#define RT_USING_POSIX
 
 /* Network */
 
@@ -161,7 +163,7 @@
 
 /* Hardware Drivers Config */
 
-#define SOC_GD32VF103V
+#define SOC_HUMMINGBIRD
 
 /* Onboard Peripheral Drivers */
 
@@ -170,10 +172,9 @@
 /* On-chip Peripheral Drivers */
 
 #define BSP_USING_UART
-#define BSP_USING_UART4
+#define BSP_USING_UART0
 
 /* Board extended module Drivers */
 
-#define SOC_GD32VF103
 
 #endif
